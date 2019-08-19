@@ -2,7 +2,7 @@ from certbot_apache import interfaces
 
 
 class InterfaceAssertions(object):
-    """ Mixin class for handling assertions of results from two ParserNode
+    """ Class for handling assertions of results from two ParserNode
     implementations using a dual interface. """
 
     def assertEqual(self, first, second):
@@ -19,7 +19,7 @@ class InterfaceAssertions(object):
         # because filepath is variable of the base ParserNode interface, and
         # unless the implementation is actually done, we cannot assume getting
         # correct results from boolean assertion for dirty
-        if not self._isPass(first.filepath, second.filepath):
+        if not self.isPass(first.filepath, second.filepath):
             assert first.dirty == second.dirty
             # We might want to disable this later if testing with two separate
             # (but identical) directory structures.
@@ -30,37 +30,62 @@ class InterfaceAssertions(object):
 
         # first was checked in the assertEqual method
         assert isinstance(second, interfaces.CommentNode)
-        assert first.comment == second.comment
+
+        if not self.isPass(first.comment, second.comment):
+            assert first.comment == second.comment
 
     def _assertEqualDirective(self, first, second):
         """ Equality assertion for DirectiveNode """
 
         # first was checked in the assertEqual method
         assert isinstance(second, interfaces.DirectiveNode)
-        assert first.enabled == second.enabled
-        assert first.name == second.name
-        assert first.parameters == second.parameters
+        # Enabled value cannot be asserted, because Augeas implementation
+        # is unable to figure that out.
+        # assert first.enabled == second.enabled
+        if not self.isPass(first.name, second.name):
+            assert first.name == second.name
+        if not self.isPass(first.parameters, second.parameters):
+            assert first.parameters == second.parameters
 
     def _assertEqualBlock(self, first, second):
         """ Equality assertion for BlockNode """
 
         # first was checked in the assertEqual method
         assert isinstance(second, interfaces.BlockNode)
-        assert first.enabled == second.enbled
-        assert first.name == second.name
-        assert first.parameters == second.parameters
-        assert len(first.children) == len(second.children)
+        # Enabled value cannot be asserted, because Augeas implementation
+        # is unable to figure that out.
+        # assert first.enabled == second.enabled
+        if not self.isPass(first.name, second.name):
+            assert first.name == second.name
+        if not self.isPass(first.parameters, second.parameters):
+            assert first.parameters == second.parameters
+        # Children cannot be asserted, because Augeas implementation will not
+        # prepopulate the sequence of children.
+        # assert len(first.children) == len(second.children)
 
-    def _isPass(self, first, second):
+    def isPass(self, first, second):
         """ Checks if either first or second holds the assertion pass value """
 
-        if instanceof(tuple, first) or instanceof(list, first):
+        if isinstance(first, tuple) or isinstance(first, list):
             if "CERTBOT_PASS_ASSERT" in first:
                 return True
-        if instanceof(tuple, second) or instanceof(list, second):
+        if isinstance(second, tuple) or isinstance(second, list):
             if "CERTBOT_PASS_ASSERT" in second:
                 return True
         if "CERTBOT_PASS_ASSERT" in [first, second]:
             return True
         return False
 
+    def assertSimple(self, first, second):
+        """ Simple assertion """
+        if not self.isPass(first, second):
+            assert first == second
+
+    def assertSimpleList(self, first, second):
+        """ Simple assertion that lists contain the same objects. This needs to
+        be used when there's uncertainty about the ordering of the list. """
+
+        if not self.isPass(first, second):
+            if first:
+                for f in first:
+                    assert f in second

@@ -1,4 +1,4 @@
-""" Tests for ParserNode interface """
+""" Augeas implementation of the ParserNode interface """
 from certbot_apache import interfaces
 
 
@@ -19,7 +19,7 @@ class AugeasCommentNode(AugeasParserNode):
     """ Augeas implementation of CommentNode interface """
 
     def __init__(self, comment, ancestor, filepath, dirty=False):
-        super(AugeasCommentNode, self).__init__(ancestor, filepath, dirty=)
+        super(AugeasCommentNode, self).__init__(ancestor, filepath, dirty)
         self.comment = comment
 
 
@@ -70,7 +70,8 @@ class AugeasBlockNode(AugeasParserNode):
         return [AugeasDirectiveNode("CERTBOT_PASS_ASSERT", ancestor=self)]
 
     def find_comments(self, comment, exact=False):  # pragma: no cover
-        return [AugeasCommentNode("CERTBOT_PASS_ASSERT", ancestor=self)]
+        return [AugeasCommentNode("CERTBOT_PASS_ASSERT", ancestor=self,
+                                  filepath="CERTBOT_PASS_ASSERT")]
 
     def delete_child(self, child):  # pragma: no cover
         pass
